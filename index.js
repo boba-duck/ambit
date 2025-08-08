@@ -6,24 +6,12 @@ const dotenv = require('dotenv');
 const mysql = require('mysql');
 const crypto = require('crypto');
 
-// Load environment variables from .env file
 dotenv.config();
 
 const app = express();
 
-// Set EJS as the templating engine
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-
-// =======================================================================
-// NOTE FOR VERCEL DEPLOYMENT:
-// This section for MySQL connection is commented out because it requires
-// a live database to be connected. Vercel doesn't host databases.
-//
-// To use this, you must set up an external database (e.g., PlanetScale,
-// AWS RDS, Neon, etc.) and configure your Vercel environment variables
-// (DB_HOST, DB_USER, etc.) to connect to it.
-// =======================================================================
 
 /*
 const db = mysql.createPool({
@@ -53,14 +41,11 @@ app.use(express.json());
 app.use(cookieParser());
 
 // CSRF Protection
-// Note: csurf needs session support, but if used with cookieParser, it's ok.
-// Make sure you are passing the CSRF token to all your forms.
 app.use(csurf({ cookie: true }));
 
 // CSRF Error Handler
 app.use((err, req, res, next) => {
   if (err.code === 'EBADCSRFTOKEN') {
-    // This is a CSRF token error
     return res.status(403).render('error', {
       title: 'Invalid CSRF Token',
       message: 'The submitted form had an invalid security token. Please try again.',
@@ -70,15 +55,8 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-// =======================================================================
-// WARNING: Plain-text password comparison is a major security risk.
-// You should hash passwords (e.g., using bcrypt) and compare the hash.
-// This example is for demonstration only and is NOT secure.
-// =======================================================================
 function authenticateUser(username, password, callback) {
-  // This is a placeholder function for demonstration.
-  // Replace this with your actual database query and password check.
-  // For Vercel, this would require your database connection.
+
   if (username === 'test' && password === 'password') {
     return callback(null, true);
   } else {
@@ -91,7 +69,6 @@ app.get('/', (req, res) => {
   res.render('index', { title: 'Ambit', csrfToken: req.csrfToken() });
 });
 
-// NOTE: Fixed typo 'authetnication' to 'authentication'
 app.post('/authentication/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -99,8 +76,6 @@ app.post('/authentication/login', (req, res) => {
     return res.status(400).json({ error: 'Username and password are required.' });
   }
 
-  // NOTE: This call will fail unless you uncomment and configure your database.
-  // The current implementation is a placeholder.
   authenticateUser(username, password, (err, isValid) => {
     if (err) {
       console.error('Authentication error:', err);
@@ -108,8 +83,6 @@ app.post('/authentication/login', (req, res) => {
     }
 
     if (isValid) {
-      // NOTE: sessionCookie is generated but not saved or used.
-      // You would typically use a session management library here.
       const sessionCookie = crypto.randomBytes(32).toString('hex');
       return res.status(200).json({ message: 'Login successful!', session: sessionCookie });
     } else {
@@ -149,7 +122,6 @@ app.get('/workspace/1', (req, res) => {
     { description: '80 Minutes', time: 'Monday at 1:29PM', type: 'Session' },
     { description: '109 Minutes', time: 'Monday at 9:02AM', type: 'Session' },
   ];
-  // NOTE: Fixed typo 'worksapcehome' to 'workspacehome'
   res.render('workspacehome', {
     userName: userName,
     totalMinutes: totalMinutes,
@@ -182,22 +154,4 @@ app.get('/login', (req, res) => {
   });
 });
 
-
-// =======================================================================
-// CRITICAL CHANGE FOR VERCEL DEPLOYMENT
-// =======================================================================
-
-// 1. You MUST remove `app.listen()` because Vercel handles the server for you.
-// 2. You MUST export the `app` instance using `module.exports`.
-//
-// This is the correct way to make your Express app a Vercel serverless function.
 module.exports = app;
-
-// The following is for local development only and must be commented out
-// or removed before deploying to Vercel.
-/*
-const port = process.env.PORT || 4000;
-app.listen(port, () => {
-  console.log(`✅ Server is running at http://localhost:${port}`);
-});
-*/
